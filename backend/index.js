@@ -1,29 +1,34 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
-const sequelize = require('./config/db');
-const { User, Event } = require('./models');
-const userRoutes = require('./routes/userRoutes');
+const { sequelize } = require('./models/index');
 const eventRoutes = require('./routes/eventRoutes');
+const userRoutes = require('./routes/userRoutes');
+const { globalLimiter } = require('./config/rateLimit');
+const { cache, cacheOptions } = require('./config/cache');
+const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Подключение маршрутов
-app.use('/api/users', userRoutes);
+// Применяем глобальный rate limiter
+app.use(globalLimiter);
+
+// Настройка статических файлов для загруженных изображений
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Применяем кэширование к маршрутам
+app.use('/api/events', cache('5 minutes'));
+app.use('/api/users', cache('5 minutes'));
+
+// Маршруты
 app.use('/api/events', eventRoutes);
-
-// Синхронизация моделей с базой данных
-sequelize.sync({ alter: true })
-    .then(() => {
-        console.log('Модели синхронизированы с базой данных');
-    })
-    .catch(err => {
-        console.error('Ошибка синхронизации моделей:', err);
-    });
+app.use('/api/users', userRoutes);
 
 // Тестовый маршрут
 app.get('/', (req, res) => {
@@ -31,7 +36,23 @@ app.get('/', (req, res) => {
 });
 
 // Запуск сервера
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
-});
+const startServer = async () => {
+    try {
+        // Проверяем подключение к базе данных
+        await sequelize.authenticate();
+        console.log('Подключение к базе данных успешно установлено.');
+
+        // Синхронизируем модели с базой данных
+        await sequelize.sync();
+        console.log('Модели синхронизированы с базой данных.');
+
+        // Запускаем сервер
+        app.listen(PORT, () => {
+            console.log(`Сервер запущен на порту ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Ошибка при запуске сервера:', error);
+    }
+};
+
+startServer();
