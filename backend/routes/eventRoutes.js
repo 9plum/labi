@@ -6,7 +6,48 @@ const path = require('path');
 const { uploadLimiter } = require('../config/rateLimit');
 const apicache = require('apicache');
 
-// Получение всех мероприятий
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Event:
+ *       type: object
+ *       required:
+ *         - title
+ *         - date
+ *         - createdBy
+ *       properties:
+ *         id:
+ *           type: integer
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         date:
+ *           type: string
+ *           format: date
+ *         createdBy:
+ *           type: integer
+ *         imageUrl:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /api/events:
+ *   get:
+ *     summary: Получить список всех мероприятий
+ *     tags: [Events]
+ *     responses:
+ *       200:
+ *         description: Список мероприятий
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Event'
+ */
 router.get('/', async (req, res) => {
     try {
         const events = await Event.findAll({
@@ -21,7 +62,28 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Получение мероприятия по ID
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   get:
+ *     summary: Получить мероприятие по ID
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Информация о мероприятии
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ *       404:
+ *         description: Мероприятие не найдено
+ */
 router.get('/:id', async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id, {
@@ -39,12 +101,30 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Создание нового мероприятия
+/**
+ * @swagger
+ * /api/events:
+ *   post:
+ *     summary: Создать новое мероприятие
+ *     tags: [Events]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Event'
+ *     responses:
+ *       201:
+ *         description: Мероприятие создано
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ */
 router.post('/', async (req, res) => {
     try {
         const { title, description, date, createdBy } = req.body;
         const event = await Event.create({ title, description, date, createdBy });
-        // Очищаем кэш после создания
         apicache.clear('events');
         res.status(201).json(event);
     } catch (error) {
@@ -52,7 +132,34 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Обновление мероприятия
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   put:
+ *     summary: Обновить мероприятие
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Event'
+ *     responses:
+ *       200:
+ *         description: Мероприятие обновлено
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ *       404:
+ *         description: Мероприятие не найдено
+ */
 router.put('/:id', async (req, res) => {
     try {
         const { title, description, date } = req.body;
@@ -61,7 +168,6 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Мероприятие не найдено' });
         }
         await event.update({ title, description, date });
-        // Очищаем кэш после обновления
         apicache.clear('events');
         res.json(event);
     } catch (error) {
@@ -69,7 +175,24 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Удаление мероприятия
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   delete:
+ *     summary: Удалить мероприятие
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: Мероприятие удалено
+ *       404:
+ *         description: Мероприятие не найдено
+ */
 router.delete('/:id', async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id);
@@ -77,7 +200,6 @@ router.delete('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Мероприятие не найдено' });
         }
         await event.destroy();
-        // Очищаем кэш после удаления
         apicache.clear('events');
         res.status(204).send();
     } catch (error) {
@@ -85,7 +207,41 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// Загрузка изображения для мероприятия
+/**
+ * @swagger
+ * /api/events/{id}/image:
+ *   post:
+ *     summary: Загрузить изображение для мероприятия
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Изображение загружено
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 imageUrl:
+ *                   type: string
+ *       404:
+ *         description: Мероприятие не найдено
+ */
 router.post('/:id/image', uploadLimiter, upload.single('image'), async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id);
@@ -100,7 +256,6 @@ router.post('/:id/image', uploadLimiter, upload.single('image'), async (req, res
         const imageUrl = `/uploads/${req.file.filename}`;
         await event.update({ imageUrl });
         
-        // Очищаем кэш после загрузки изображения
         apicache.clear('events');
         res.json({ imageUrl });
     } catch (error) {
