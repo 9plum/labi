@@ -42,7 +42,11 @@ router.post('/login', async (req, res) => {
         // Проверка блокировки аккаунта
         if (user.isLocked) {
             if (user.lockUntil && user.lockUntil > new Date()) {
-                return res.status(403).json({ message: 'Аккаунт заблокирован. Попробуйте позже.' });
+                const minutesLeft = Math.ceil((user.lockUntil - new Date()) / 1000 / 60);
+                return res.status(403).json({ 
+                    message: 'Аккаунт заблокирован', 
+                    details: `Попробуйте через ${minutesLeft} минут`
+                });
             } else {
                 // Разблокировка аккаунта если время блокировки истекло
                 user.isLocked = false;
@@ -57,12 +61,23 @@ router.post('/login', async (req, res) => {
         if (!isPasswordValid) {
             // Увеличение счетчика неудачных попыток
             user.failed_attempts += 1;
+            const attemptsLeft = 5 - user.failed_attempts;
+            
             if (user.failed_attempts >= 5) {
                 user.isLocked = true;
                 user.lockUntil = new Date(Date.now() + 30 * 60 * 1000); // Блокировка на 30 минут
+                await user.save();
+                return res.status(401).json({ 
+                    message: 'Аккаунт заблокирован', 
+                    details: 'Слишком много неудачных попыток входа. Попробуйте через 30 минут'
+                });
             }
+            
             await user.save();
-            return res.status(401).json({ message: 'Неверный email или пароль' });
+            return res.status(401).json({ 
+                message: 'Неверный email или пароль',
+                details: `Осталось попыток: ${attemptsLeft}`
+            });
         }
 
         // Сброс счетчика неудачных попыток при успешном входе

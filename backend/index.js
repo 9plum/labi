@@ -13,6 +13,7 @@ const { cache, cacheOptions } = require('./config/cache');
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
 const path = require('path');
+const checkAccountLock = require('./middleware/checkAccountLock');
 
 // Инициализация Passport
 require('./config/passport');
@@ -47,8 +48,8 @@ app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 
 // Защищенные маршруты
-app.use('/api/events', passport.authenticate('jwt', { session: false }), eventRoutes);
-app.use('/api/users', passport.authenticate('jwt', { session: false }), userRoutes);
+app.use('/api/events', passport.authenticate('jwt', { session: false }), checkAccountLock, eventRoutes);
+app.use('/api/users', passport.authenticate('jwt', { session: false }), checkAccountLock, userRoutes);
 
 // Тестовый маршрут
 app.get('/', (req, res) => {
