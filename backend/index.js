@@ -2,14 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const passport = require('passport');
 const { sequelize } = require('./models/index');
 const eventRoutes = require('./routes/eventRoutes');
 const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/auth');
+const publicRoutes = require('./routes/public');
 const { globalLimiter } = require('./config/rateLimit');
 const { cache, cacheOptions } = require('./config/cache');
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
 const path = require('path');
+const checkAccountLock = require('./middleware/checkAccountLock');
+
+// Инициализация Passport
+require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +26,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+app.use(passport.initialize());
 
 // Применяем глобальный rate limiter
 app.use(globalLimiter);
@@ -33,9 +41,15 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/api/events', cache('5 minutes'));
 app.use('/api/users', cache('5 minutes'));
 
-// Маршруты
-app.use('/api/events', eventRoutes);
-app.use('/api/users', userRoutes);
+// Публичные маршруты
+app.use('/api/public', publicRoutes);
+
+// Маршруты аутентификации
+app.use('/api/auth', authRoutes);
+
+// Защищенные маршруты
+app.use('/api/events', passport.authenticate('jwt', { session: false }), checkAccountLock, eventRoutes);
+app.use('/api/users', passport.authenticate('jwt', { session: false }), checkAccountLock, userRoutes);
 
 // Тестовый маршрут
 app.get('/', (req, res) => {
