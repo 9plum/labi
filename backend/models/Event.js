@@ -1,31 +1,44 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../config/db");
+const User = require("./User");
 
-const Event = (sequelize) => {
-    return sequelize.define('Event', {
+const Event = sequelize.define(
+    "Event",
+    {
         id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
-            autoIncrement: true
         },
         title: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
         },
         description: {
-            type: DataTypes.TEXT
+            type: DataTypes.TEXT,
         },
         date: {
             type: DataTypes.DATE,
-            allowNull: false
+            allowNull: false,
         },
         createdBy: {
-            type: DataTypes.INTEGER,
-            allowNull: false
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: User,
+                key: "id",
+            },
         },
-        imageUrl: {
-            type: DataTypes.STRING
-        }
-    });
-};
+        deletedAt: {
+            type: DataTypes.DATE,
+        },
+    },
+    {
+        paranoid: true,
+    }
+);
+
+User.hasMany(Event, { foreignKey: "createdBy", onDelete: "CASCADE" });
+Event.belongsTo(User, { foreignKey: "createdBy" });
 
 module.exports = Event;
