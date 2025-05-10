@@ -1,24 +1,40 @@
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+const { Sequelize } = require("sequelize");
+require("dotenv").config();
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
+    process.env.DB_NAME,     // Название БД
+    process.env.DB_USER,     // Пользователь
+    process.env.DB_PASSWORD, // Пароль
     {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
-        dialect: 'postgres',
+        dialect: "postgres", // Указываем, что используем PostgreSQL
+        logging: false,      // Отключаем логи SQL-запросов
     }
 );
 
-// Проверка подключения
-sequelize.authenticate()
-    .then(() => {
-        console.log('Подключение к базе данных успешно установлено');
-    })
-    .catch(err => {
-        console.error('Ошибка подключения к базе данных:', err);
-    });
+// Функция проверки соединения
+const authenticateDB = async () => {
+    try {
+        await sequelize.authenticate();
+        console.log("Успешное подключение к базе данных");
+    } catch (error) {
+        console.error("Ошибка подключения к базе данных:", error);
+    }
+};
 
-module.exports = sequelize;
+// Функция для принудительной синхронизации (пересоздания) таблиц
+const syncDB = async () => {
+    try {
+        await sequelize.sync({ force: true }); // force: true пересоздает таблицы
+        console.log("Таблицы успешно пересозданы");
+    } catch (error) {
+        console.error("Ошибка при синхронизации БД:", error);
+    }
+};
+
+module.exports = { 
+    sequelize, 
+    authenticateDB,
+    syncDB
+};
