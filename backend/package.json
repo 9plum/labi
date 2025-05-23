@@ -1,7 +1,6 @@
 {
   "name": "web",
   "version": "1.0.0",
-  "description": "Дворников Владислав Александрович ПрИ-22",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon",
@@ -19,7 +18,6 @@
     "url": "git+https://github.com/Urahara192/web-labs.git"
   },
   "keywords": [],
-  "author": "Дворников Владислав Александрович",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Urahara192/web-labs/issues"
