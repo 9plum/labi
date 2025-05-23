@@ -17,7 +17,7 @@ export default [
     },
     rules: {
       'no-console': 'off',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': "off",
       semi: ['error', 'always'],
       quotes: ['error', 'single'],
     },
