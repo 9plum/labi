@@ -61,6 +61,9 @@ export class Event extends Model {
   @Column(DataType.TEXT)
   declare description: string | null;
 
+   @Column(DataType.ARRAY(DataType.TEXT))
+  declare users: string[];
+
   @Column(DataType.DATE)
   declare date: Date;
 
