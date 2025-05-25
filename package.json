@@ -2,7 +2,7 @@
    "type": "module",
   "scripts": {
     "prepare": "husky install",
-    "lint": "cd ./frontend npm run lint"
+    "lint": "cd ./frontend npm run lint && cd ../backend npm run lint "
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": "npm run lint"
