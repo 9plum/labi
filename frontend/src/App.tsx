@@ -53,9 +53,7 @@ function App() {
           <Route
             path="/"
             element={
-              <PrivateRoute>
-                <EventsPage />
-              </PrivateRoute>
+              <EventsPage />
             }
           />
           <Route
@@ -69,17 +67,13 @@ function App() {
           <Route
             path="/login"
             element={
-              <PublicRoute>
                 <LoginPage />
-              </PublicRoute>
             }
           />
           <Route
             path="/register"
             element={
-              <PublicRoute>
                 <RegisterPage />
-              </PublicRoute>
             }
           />
           <Route path="*" element={<NotFoundPage />} />

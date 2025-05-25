@@ -12,8 +12,8 @@ export const eventService = {
     return response.data;
   },
 
-  updateEvent: async (id: number, eventData: Partial<Event>) => {
-    const response = await axiosInstance.put<Event>(`/events/${id}`, eventData);
+  zapisEvent: async (id: string) => {
+    const response = await axiosInstance.post<Event>(`/events/${id}`);
     return response.data;
   },
 
