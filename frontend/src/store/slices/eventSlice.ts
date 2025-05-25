@@ -1,68 +1,62 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { Event } from '../../types';
 import { eventService } from '../../api/eventService';
-
-type Event = any;
 
 interface EventState {
   events: Event[];
-  loading: boolean;
+  userEvents: Event[];
+  selectedEvent: Event | null;
+  isLoading: boolean;
   error: string | null;
 }
 
 const initialState: EventState = {
   events: [],
-  loading: false,
+  userEvents: [],
+  selectedEvent: null,
+  isLoading: false,
   error: null,
 };
 
-// Async actions
-export const fetchEvents = createAsyncThunk(
-  'events/fetchEvents',
-  async (_, { rejectWithValue }) => {
-    try {
-      return await eventService.getAllEvents();
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch events');
-    }
-  }
-);
+export const fetchEvents = createAsyncThunk('events/fetchEvents', async () => {
+  const response = await eventService.getEvents();
+  return response;
+});
+
+export const fetchUserEvents = createAsyncThunk('events/fetchUserEvents', async (userId: string) => {
+  const response = await eventService.getUserEvents(userId);
+  return response;
+});
 
 export const createEvent = createAsyncThunk(
   'events/createEvent',
-  async (eventData: Partial<Event>, { rejectWithValue }) => {
-    try {
-      console.log('Создание мероприятия в slice:', eventData);
-      const result = await eventService.createEvent(eventData as Omit<Event, 'id'>);
-      console.log('Ответ от сервера:', result);
-      return result;
-    } catch (error: any) {
-      console.error('Ошибка при создании мероприятия:', error);
-      return rejectWithValue(error.response?.data?.message || 'Failed to create event');
-    }
+  async (eventData: Omit<Event, 'id' | 'participants'>) => {
+    const response = await eventService.createEvent(eventData);
+    return response;
   }
 );
 
-export const updateEventAsync = createAsyncThunk(
+export const updateEvent = createAsyncThunk(
   'events/updateEvent',
-  async ({ id, data }: { id: number; data: Partial<Event> }, { rejectWithValue }) => {
-    try {
-      return await eventService.updateEvent(id, data);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update event');
-    }
+  async ({ id, eventData }: { id: string; eventData: Partial<Event> }) => {
+    const response = await eventService.updateEvent(id, eventData);
+    return response;
   }
 );
 
-export const deleteEventAsync = createAsyncThunk(
+export const participateInEvent = createAsyncThunk(
+  'events/participate',
+  async (eventId: string) => {
+    const response = await eventService.participateInEvent(eventId);
+    return response;
+  }
+);
+
+export const deleteEvent = createAsyncThunk(
   'events/deleteEvent',
-  async (id: number, { rejectWithValue }) => {
-    try {
-      await eventService.deleteEvent(id);
-      return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete event');
-    }
+  async (eventId: string) => {
+    const response = await eventService.deleteEvent(eventId);
+    return { id: eventId, ...response };
   }
 );
 
@@ -70,83 +64,78 @@ const eventSlice = createSlice({
   name: 'events',
   initialState,
   reducers: {
-    setEvents: (state, action: PayloadAction<Event[]>) => {
-      state.events = action.payload;
+    setSelectedEvent: (state, action: PayloadAction<Event | null>) => {
+      state.selectedEvent = action.payload;
+    },
+    clearEventError: (state) => {
       state.error = null;
-    },
-    addEvent: (state, action: PayloadAction<Event>) => {
-      state.events.push(action.payload);
-    },
-    updateEvent: (state, action: PayloadAction<Event>) => {
-      const index = state.events.findIndex(event => event.id === action.payload.id);
-      if (index !== -1) {
-        state.events[index] = action.payload;
-      }
-    },
-    deleteEvent: (state, action: PayloadAction<number>) => {
-      state.events = state.events.filter(event => event.id !== action.payload);
-    },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action: PayloadAction<string>) => {
-      state.error = action.payload;
-    },
-    clearEvents: (state) => {
-      state.events = [];
-      state.error = null;
-      state.loading = false;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch events
       .addCase(fetchEvents.pending, (state) => {
-        state.loading = true;
+        state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchEvents.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.events = action.payload;
-        state.loading = false;
       })
       .addCase(fetchEvents.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        state.isLoading = false;
+        state.error = action.error.message || 'Ошибка при загрузке событий';
       })
-      // Create event
-      .addCase(createEvent.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(fetchUserEvents.fulfilled, (state, action) => {
+        state.userEvents = action.payload;
       })
       .addCase(createEvent.fulfilled, (state, action) => {
         state.events.push(action.payload);
-        state.loading = false;
       })
-      .addCase(createEvent.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Update event
-      .addCase(updateEventAsync.fulfilled, (state, action) => {
-        const index = state.events.findIndex(event => event.id === action.payload.id);
+      .addCase(updateEvent.fulfilled, (state, action) => {
+        const index = state.events.findIndex((event) => event.id === action.payload.id);
         if (index !== -1) {
           state.events[index] = action.payload;
         }
       })
-      // Delete event
-      .addCase(deleteEventAsync.fulfilled, (state, action) => {
-        state.events = state.events.filter(event => event.id !== action.payload);
+      .addCase(participateInEvent.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(participateInEvent.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const index = state.events.findIndex((event) => event.id === action.payload.id);
+        if (index !== -1) {
+          state.events[index] = action.payload;
+        }
+        const userEventIndex = state.userEvents.findIndex((event) => event.id === action.payload.id);
+        if (userEventIndex !== -1) {
+          state.userEvents[userEventIndex] = action.payload;
+        } else {
+          state.userEvents.push(action.payload);
+        }
+      })
+      .addCase(participateInEvent.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Ошибка при участии в мероприятии';
+      })
+      .addCase(deleteEvent.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteEvent.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.events = state.events.filter(event => event.id !== action.payload.id);
+        state.userEvents = state.userEvents.filter(event => event.id !== action.payload.id);
+        if (state.selectedEvent?.id === action.payload.id) {
+          state.selectedEvent = null;
+        }
+      })
+      .addCase(deleteEvent.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Ошибка при удалении мероприятия';
       });
   },
 });
 
-export const { 
-  setEvents, 
-  addEvent, 
-  updateEvent, 
-  deleteEvent, 
-  setLoading, 
-  setError, 
-  clearEvents 
-} = eventSlice.actions;
+export const { setSelectedEvent, clearEventError } = eventSlice.actions;
 export default eventSlice.reducer; 

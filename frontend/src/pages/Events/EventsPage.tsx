@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchEvents } from '../../store/slices/eventSlice';
 import { RootState } from 'store';
 import { eventService } from '@api/eventService';
+import { Link } from 'react-router-dom';
 
 type EventType = {
   id: string;
@@ -50,6 +51,9 @@ const EventsPage = () => {
 
   return (
     <div className={styles.container}>
+      <Link to="/events/new"><button>Создать</button></Link>
+      <br />
+      <br />
       {events.length === 0 ? (
         <div className={styles.noEvents}>Нет мероприятий</div>
       ) : (

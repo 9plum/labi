@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { setUser } from "./store/slices/userSlice";
 import { getCurrentUser } from "@api/auth";
 import { useDispatch } from "react-redux";
+import EventFormPage from "@pages/Events/EventsFormPage";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = getToken();
@@ -54,6 +55,14 @@ function App() {
             path="/"
             element={
               <EventsPage />
+            }
+          />
+          <Route
+            path="/events/new"
+            element={
+              <PrivateRoute>
+                <EventFormPage />
+              </PrivateRoute>
             }
           />
           <Route
