@@ -1,0 +1,26 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parser": "@typescript-eslint/parser",        // Парсер для TS/TSX
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true                           // Чтобы понимать JSX
+    }
+  },
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"  // Рекомендации для TS
+  ],
+  "rules": {
+    // сюда можно добавить свои правила или отключить ненужные
+    "@typescript-eslint/no-unused-expressions": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars":"off"
+
+  }
+}
