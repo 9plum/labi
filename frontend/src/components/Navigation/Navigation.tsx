@@ -34,7 +34,9 @@ const Navigation = () => {
   }
 
   const handleLogout = async () => {
-
+    navigate('/');
+    localStorage.removeItem("auth_token")
+    dispatch(setUser(null))
   };
 
   const handleLogoClick = (e: React.MouseEvent) => {
@@ -49,7 +51,7 @@ const Navigation = () => {
   return (
     <nav className={styles.navigation}>
       <div className={styles.logo}>
-        <Link to={user ? "/events" : "/"} onClick={handleLogoClick}>
+        <Link to={"/"} onClick={handleLogoClick}>
           Webi
         </Link>
       </div>

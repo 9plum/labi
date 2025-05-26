@@ -1,7 +1,9 @@
+import jwt from 'jsonwebtoken';
 import { Router, Request, Response } from 'express';
 import { literal, CreationAttributes } from 'sequelize';
 import { Event } from '@models/Event';
 import dotenv from 'dotenv';
+import { User } from '@models/User';
 
 dotenv.config();
 
@@ -90,6 +92,92 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
+
+/**
+ * @swagger
+ * /events/{id}:
+ *   post:
+ *     summary: Обновить мероприятие
+ *     description: Обновляет информацию о мероприятии по его ID.
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID мероприятия
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Мероприятие успешно обновлено
+ *       404:
+ *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка при обновлении мероприятия
+ */
+
+router.post('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findOne({ where: { id } });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Мероприятие не найдено' });
+    }
+
+    const authHeader = req.header('Authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Требуется токен авторизации',
+      });
+    }
+
+    const token = authHeader.split(' ')[1].trim();
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || '123');
+
+    // 2. Поиск пользователя
+    const user = await User.findOne({
+      where: { id: (decoded as jwt.JwtPayload).id },
+      attributes: { exclude: ['password'] },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Пользователь не найден',
+      });
+    }
+
+    event.update({ users: [...(event?.users || []), user.id] });
+
+    res.status(200).json(event);
+  } catch (error) {
+    const err =
+      error instanceof Error ? error : new Error('Неизвестная ошибка');
+    res.status(500).json({
+      error: 'Ошибка при поиске мероприятия',
+      details: err.message,
+    });
+  }
+});
+
 /**
  * @swagger
  * /events:
@@ -126,15 +214,40 @@ router.post('/', async (req: Request, res: Response) => {
     const { title, description, date } = req.body;
 
     if (!title || !date) {
-      return res
-        .status(400)
-        .json({ error: 'Название, дата обязательны' });
+      return res.status(400).json({ error: 'Название, дата обязательны' });
+    }
+
+    const authHeader = req.header('Authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Требуется токен авторизации',
+      });
+    }
+
+    const token = authHeader.split(' ')[1].trim();
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || '123');
+
+    // 2. Поиск пользователя
+    const user = await User.findOne({
+      where: { id: (decoded as jwt.JwtPayload).id },
+      attributes: { exclude: ['password'] },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Пользователь не найден',
+      });
     }
 
     const event = await Event.create({
       title,
       description,
       date,
+      createdBy: user.id,
     } as CreationAttributes<Event>);
 
     res.status(201).json(event);

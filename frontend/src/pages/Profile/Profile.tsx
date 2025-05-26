@@ -136,15 +136,6 @@ export const Profile: React.FC = () => {
             <p>
               <strong>Email:</strong> {currentUser.email}
             </p>
-            <p>
-              <strong>Пол:</strong>{" "}
-              {currentUser.gender === "male" ? "Мужской" : "Женский"}
-            </p>
-            <p>
-              <strong>Дата рождения:</strong>{" "}
-              {new Date(currentUser.birthDate).toLocaleDateString()}
-            </p>
-            <button onClick={() => setIsEditing(true)}>Редактировать</button>
           </div>
         )}
       </div>
