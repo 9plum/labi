@@ -12,6 +12,7 @@ import { setUser } from "./store/slices/userSlice";
 import { getCurrentUser } from "@api/auth";
 import { useDispatch } from "react-redux";
 import EventFormPage from "@pages/Events/EventsFormPage";
+import MainPage from "@pages/Main/MainPage";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = getToken();
@@ -53,6 +54,12 @@ function App() {
         <Routes>
           <Route
             path="/"
+            element={
+              <MainPage />
+            }
+          />
+          <Route
+            path="/events"
             element={
               <EventsPage />
             }

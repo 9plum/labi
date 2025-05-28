@@ -51,7 +51,7 @@ const EventsPage = () => {
 
   return (
     <div className={styles.container}>
-      <Link to="/events/new"><button>Создать</button></Link>
+      {user && <Link to="/events/new"><button>Создать</button></Link>}
       <br />
       <br />
       {events.length === 0 ? (

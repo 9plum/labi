@@ -15,19 +15,7 @@ interface User {
 const Navigation = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate();
-  const location = useLocation();
   const user = useSelector((state: RootState) => state.user.currentUser)
-  // const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    (async function() {
-
-      const res = await getCurrentUser()
-      if (res.user) {
-        dispatch(setUser(res.user))
-      }
-    })()
-  }, [location.pathname]);
 
   const handleOpenProfile = () => {
     navigate('/profile');
@@ -54,6 +42,12 @@ const Navigation = () => {
         <Link to={"/"} onClick={handleLogoClick}>
           Webi
         </Link>
+      </div>
+      <div className={styles.logo}>
+
+      {user && <Link to={"/events"} onClick={handleLogoClick}>
+          Мероприятия
+        </Link>}
       </div>
       <div className={styles.links}>
         {user ? (
