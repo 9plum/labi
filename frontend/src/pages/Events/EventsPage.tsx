@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './EventsPage.module.scss';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchEvents } from '../../store/slices/eventSlice';
+import { fetchEvents, fetchUserEvents } from '../../store/slices/eventSlice';
 import { RootState } from 'store';
 import { eventService } from '@api/eventService';
 import { Link } from 'react-router-dom';
@@ -21,11 +21,13 @@ const EventsPage = () => {
   const isLoading = useSelector((state: RootState) => state.events.loading);
   const events = useSelector((state: RootState) => state.events.events);
   const user = useSelector((state: RootState) => state.user.currentUser);
+  const users = useSelector((state: RootState) => state.events.userEvents);
 
   const [modalEvent, setModalEvent] = useState<EventType | null>(null);
 
   useEffect(() => {
     dispatch(fetchEvents());
+    dispatch(fetchUserEvents());
   }, [dispatch]);
 
   const handleZapis = async (id: string) => {
@@ -110,7 +112,7 @@ const EventsPage = () => {
             {modalEvent?.users?.length > 0 ? (
               <ul>
                 {modalEvent?.users?.map((userId) => (
-                  <li key={userId}>{userId}</li>
+                  <li key={userId}>{users?.find((user) => user.id === userId).name}</li>
                 ))}
               </ul>
             ) : (

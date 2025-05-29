@@ -7,8 +7,8 @@ export const eventService = {
     return response.data;
   },
 
-  getUserEvents: async (userId: string) => {
-    const response = await axios.get(`/events/user/${userId}`);
+  getUserEvents: async () => {
+    const response = await axios.get(`/users`);
     return response.data;
   },
 
