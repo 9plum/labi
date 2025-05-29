@@ -1,10 +1,13 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../store";
 import { updateUserAsync } from "../../store/slices/userSlice";
 import styles from "./Profile.module.scss";
 import Navigation from "@components/Navigation/Navigation";
+import axios from "axios";
+import { eventService } from "@api/eventService";
+import { fetchEvents } from "../../store/slices/eventSlice";
 
 type FormValues = {
   firstName: string;
@@ -16,6 +19,7 @@ type FormValues = {
 
 export const Profile: React.FC = () => {
   const dispatch = useDispatch();
+  const events = useSelector((state: RootState) => state.events.events);
   const { currentUser, loading, error } = useSelector(
     (state: RootState) => state.user
   );
@@ -26,7 +30,7 @@ export const Profile: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    setValue
+    setValue,
   } = useForm<FormValues>({
     defaultValues: {
       firstName: currentUser?.name?.split(" ")[0] || "",
@@ -38,11 +42,11 @@ export const Profile: React.FC = () => {
   });
 
   useEffect(() => {
-    setValue("firstName", currentUser?.name.split(" ")[0])
-    setValue("lastName", currentUser?.name.split(" ")[1])
-    setValue("birthDate", currentUser?.birthDate?.split("T")[0])
-    setValue('gender', currentUser?.gender)
-    setValue('email', currentUser?.email)
+    setValue("firstName", currentUser?.name.split(" ")[0]);
+    setValue("lastName", currentUser?.name.split(" ")[1]);
+    setValue("birthDate", currentUser?.birthDate?.split("T")[0]);
+    setValue("gender", currentUser?.gender);
+    setValue("email", currentUser?.email);
   }, [currentUser]);
 
   console.log(currentUser?.name.split(" ")[0]);
@@ -130,8 +134,7 @@ export const Profile: React.FC = () => {
         ) : (
           <div className={styles.info}>
             <p>
-              <strong>Имя и фамилия:</strong>{" "}
-              {`${currentUser.name}`}
+              <strong>Имя и фамилия:</strong> {`${currentUser.name}`}
             </p>
             <p>
               <strong>Email:</strong> {currentUser.email}
@@ -139,6 +142,42 @@ export const Profile: React.FC = () => {
           </div>
         )}
       </div>
+        <div>
+          <div className={styles.grid}>
+            {events
+              ?.filter((e) => e.createdBy === currentUser.id)
+              .map((event) => (
+                <div
+                  key={event.id}
+                  className={`${styles.card} ${event.deletedAt ? styles.deleted : ""}`}
+                >
+                  <h3>{event.title}</h3>
+                  <img
+                    src="https://www.bigfootdigital.co.uk/wp-content/uploads/2020/07/image-optimisation-scaled.jpg"
+                    className={styles.image}
+                  />
+                  <p className={styles.description}>{event.description}</p>
+                  <div className={styles.date}>
+                    <span className={styles.icon}>📅</span>
+                    {new Date(event.date).toLocaleString("ru-RU", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {event.deletedAt && (
+                      <span className={styles.deletedLabel}>
+                        удалено {new Date(event.deletedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    <br />
+                    <>Уже записались: {event?.users?.length}</>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
     </>
   );
 };

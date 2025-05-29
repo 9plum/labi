@@ -264,6 +264,55 @@ router.post('/', async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /events/myPosts/{id}:
+ *   get:
+ *     summary: Получить одно мероприятие по ID
+ *     description: Возвращает информацию о мероприятии по его ID.
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID мероприятия
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Мероприятие найдено
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ *       404:
+ *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка при поиске мероприятия
+ */
+
+router.get('/myPosts/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params; 
+    console.log(id)
+    const events = await Event.findAll({
+      where: {
+        createdBy: id,
+      }
+    } as CreationAttributes<Event>);
+
+    res.status(201).json(events);
+  } catch (error) {
+    const err =
+      error instanceof Error ? error : new Error('Неизвестная ошибка');
+    console.log(err);
+    res.status(500).json({
+      error: 'Ошибка при создании мероприятия',
+      details: err.message,
+    });
+  }
+});
+
+/**
+ * @swagger
  * /events/{id}:
  *   put:
  *     summary: Обновить мероприятие
