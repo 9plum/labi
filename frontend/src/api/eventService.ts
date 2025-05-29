@@ -7,10 +7,17 @@ export const eventService = {
     return response.data;
   },
 
-  getUserEvents: async (userId: string) => {
-    const response = await axios.get(`/events/user/${userId}`);
+  getUserEvents: async () => {
+    const response = await axios.get(`/users`);
     return response.data;
   },
+
+
+  getProfileEvents: async (id:string) => {
+    const response = await axios.get(`/events/myPosts/${id}`);
+    return response.data;
+  },
+
 
   createEvent: async (eventData: Omit<Event, 'id' | 'participants'>) => {
     const response = await axios.post('/events', eventData);

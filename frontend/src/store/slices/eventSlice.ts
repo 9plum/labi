@@ -23,8 +23,8 @@ export const fetchEvents = createAsyncThunk('events/fetchEvents', async () => {
   return response;
 });
 
-export const fetchUserEvents = createAsyncThunk('events/fetchUserEvents', async (userId: string) => {
-  const response = await eventService.getUserEvents(userId);
+export const fetchUserEvents = createAsyncThunk('events/fetchUserEvents', async () => {
+  const response = await eventService.getUserEvents();
   return response;
 });
 

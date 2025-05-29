@@ -13,6 +13,7 @@ import { getCurrentUser } from "@api/auth";
 import { useDispatch } from "react-redux";
 import EventFormPage from "@pages/Events/EventsFormPage";
 import MainPage from "@pages/Main/MainPage";
+import { fetchEvents } from "./store/slices/eventSlice";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = getToken();
@@ -39,11 +40,12 @@ function App() {
 
    useEffect(() => {
       (async function() {
-  
         const res = await getCurrentUser()
         if (res.user) {
           dispatch(setUser(res.user))
         }
+
+         dispatch(fetchEvents())
       })()
     }, [location.pathname]);
 

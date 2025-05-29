@@ -24,9 +24,7 @@ const router = Router();
  */
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const users = await User.findAll({
-      where: literal('"deletedAt" IS NULL'), // Использование literal без any
-    });
+    const users = await User.findAll();
 
     res.status(200).json(users);
   } catch (error: unknown) {
@@ -89,7 +87,11 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    const user = await User.create({ name, email, password } as CreationAttributes<User>);
+    const user = await User.create({
+      name,
+      email,
+      password,
+    } as CreationAttributes<User>);
 
     res.status(201).json(user);
   } catch (error: unknown) {
